@@ -39,7 +39,7 @@ void packet_handler (u_char *user, const struct pcap_pkthdr *h, const u_char *by
 	if (h->caplen < sizeof(struct ether_header) + (size_t)ntohl(ip_hdr->tot_len)) return;
 	puts("TCP-1");
 
-	const size_t total_pkt_sz = sizeof(struct ether_header) + ((size_t)ip_hdr->tot_len);
+	const size_t total_pkt_sz = sizeof(struct ether_header) + (size_t)ntohl(ip_hdr->tot_len);
 
 	const struct tcphdr *tcp_hdr = (const struct tcphdr *)(((const uint8_t *)ip_hdr) + (ip_hdr->ihl * 4));
 	const size_t tcp_hdr_sz = (size_t)(tcp_hdr->th_off) * 4L;
