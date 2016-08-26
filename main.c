@@ -29,7 +29,7 @@ struct simple_packet {
 	struct iphdr ip_hdr;
 	struct tcphdr tcp_hdr;
 	uint8_t payload[sizeof(payload) - 1];
-};
+} __attribute__((packed));
 
 
 void calc_tcp_chksum (const struct iphdr *ip_hdr, struct tcphdr *tcp_hdr, size_t tcp_len, const void *data, size_t data_len) {
@@ -38,7 +38,7 @@ void calc_tcp_chksum (const struct iphdr *ip_hdr, struct tcphdr *tcp_hdr, size_t
 
 	chksum = (ip_hdr->saddr >> 16) + (ip_hdr->saddr & 0xffff)
 		+ (ip_hdr->daddr >> 16) + (ip_hdr->daddr & 0xffff)
-		+ ip_hdr->protocol + htons(ntohs(ip_hdr->tot_len) - (ip_hdr->ihl * 4));
+		+ ntohs((0 << 8) | ip_hdr->protocol) + htons(ntohs(ip_hdr->tot_len) - (ip_hdr->ihl * 4));
 	chksum = (chksum >> 16) + (chksum & 0xffff);
 	chksum = (chksum >> 16) + (chksum & 0xffff);
 
@@ -64,7 +64,7 @@ void calc_tcp_chksum (const struct iphdr *ip_hdr, struct tcphdr *tcp_hdr, size_t
 	if (data_len == 1) chksum += *((const uint8_t *)dataptr);
 	
 	chksum = (chksum >> 16) + (chksum & 0xffff);
-	tcp_hdr->th_sum = htons((~((chksum >> 16) + (chksum & 0xffff))) & 0xffff);
+	tcp_hdr->th_sum = ((~((chksum >> 16) + (chksum & 0xffff))) & 0xffff);
 }
 
 void calc_ip_chksum (struct iphdr *ip_hdr, size_t ip_len) {
@@ -81,7 +81,7 @@ void calc_ip_chksum (struct iphdr *ip_hdr, size_t ip_len) {
 	}
 	if (ip_len == 1) chksum += *((const uint8_t *)dataptr);
 	chksum = (chksum >> 16) + (chksum & 0xffff);
-	ip_hdr->check = htons((~((chksum >> 16) + (chksum & 0xffff))) & 0xffff);
+	ip_hdr->check = ((~((chksum >> 16) + (chksum & 0xffff))) & 0xffff);
 }
 
 void packet_handler (u_char *user, const struct pcap_pkthdr *h, const u_char *bytes) {
@@ -169,7 +169,8 @@ int main (int argc, char **argv) {
 	int err;
 	struct bpf_program prog;
 
-	dev = pcap_lookupdev(errbuf);
+	//dev = pcap_lookupdev(errbuf);
+	dev = "lo";
 	if (dev == NULL) {
 		fprintf(stderr, "%s: pcap_lookupdev: %s\n", argv[0], errbuf);
 		return EXIT_FAILURE;
